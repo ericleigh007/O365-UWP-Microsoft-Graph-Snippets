@@ -51,6 +51,10 @@ namespace O365_UWP_Unified_API_Snippets
             // These stories require your app to have permission to access your organization's directory. 
             // Comment them if you're not going to run the app with that permission level.
 
+            // API level
+            StoryCollection.Add(new StoryDefinition() { GroupName = "API", Title = "Get MetaData", RunStoryAsync = APIStories.TryGetMetadataAsync });
+            StoryCollection.Add(new StoryDefinition() { GroupName = "API", Title = "Get BetaData", RunStoryAsync = APIStories.TryGetBetadataAsync });
+
             // User stories
 
             StoryCollection.Add(new StoryDefinition() { GroupName = "Users", Title = "Get Me", RunStoryAsync = UserStories.TryGetMeAsync });
@@ -75,6 +79,7 @@ namespace O365_UWP_Unified_API_Snippets
             StoryCollection.Add(new StoryDefinition() { GroupName = "Users", Title = "Delete File", RunStoryAsync = UserStories.TryDeleteFileAsync });
             StoryCollection.Add(new StoryDefinition() { GroupName = "Users", Title = "Create Folder", RunStoryAsync = UserStories.TryCreateFolderAsync });
 
+            StoryCollection.Add(new StoryDefinition() { GroupName = "Users", Title = "Test User Events", RunStoryAsync = UserStories.TryGetTestUsersEventsAsync });
 
             // Group stories
 

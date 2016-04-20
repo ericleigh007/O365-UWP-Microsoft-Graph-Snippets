@@ -17,6 +17,11 @@ namespace O365_UWP_Unified_API_Snippets
         const string serviceEndpoint = "https://graph.microsoft.com/v1.0/";
         static string tenant = App.Current.Resources["ida:Domain"].ToString();
 
+        static List<string> users;
+        static List<JObject> usersDetails;
+
+        public static string specificUsereMail { get; private set; }
+
         // Returns information about the signed-in user from Azure Active Directory.
         public static async Task<string> GetMeAsync()
         {
@@ -65,7 +70,6 @@ namespace O365_UWP_Unified_API_Snippets
         // Returns all of the users in the directory of the signed-in user's tenant. 
         public static async Task<List<string>> GetUsersAsync()
         {
-            var users = new List<string>();
             JObject jResult = null;
 
             try
@@ -77,25 +81,44 @@ namespace O365_UWP_Unified_API_Snippets
                 // Endpoint for all users in an organization
                 Uri usersEndpoint = new Uri(serviceEndpoint + "myOrganization/users");
 
-                HttpResponseMessage response = await client.GetAsync(usersEndpoint);
+                users = new List<string>();
+                usersDetails = new List<JObject>();
 
-                if (response.IsSuccessStatusCode)
+                int page_no = 1;
+                while(usersEndpoint != null )
                 {
-                    string responseContent = await response.Content.ReadAsStringAsync();
-                    jResult = JObject.Parse(responseContent);
+                    HttpResponseMessage response = await client.GetAsync(usersEndpoint);
 
-                    foreach (JObject user in jResult["value"])
+                    if (response.IsSuccessStatusCode)
                     {
-                        string userName = (string)user["displayName"];
-                        users.Add(userName);
-                        Debug.WriteLine("Got user: " + userName);
-                    }
-                }
+                        string responseContent = await response.Content.ReadAsStringAsync();
+                        jResult = JObject.Parse(responseContent);
 
-                else
-                {
-                    Debug.WriteLine("We could not get users. The request returned this status code: " + response.StatusCode);
-                    return null;
+                        foreach (JObject user in jResult["value"])
+                        {
+                            string userName = (string)user["displayName"];
+                            users.Add(userName);
+                            usersDetails.Add(user);
+                            Debug.WriteLine("Got user: " + userName + " domain mail: " + user["userPrincipalName"]);
+                        }
+
+                        var nextlink = jResult["@odata.nextLink"];
+                        if (nextlink != null)
+                        {
+                            usersEndpoint = new Uri(nextlink.ToString());
+                            Debug.WriteLine($" ** page {++page_no} **");
+                        }
+                        else
+                        {
+                            usersEndpoint = null;
+                        }
+                    }
+                    else
+                    {
+                        Debug.WriteLine("We could not get users. The request returned this status code: " + response.StatusCode);
+                        return null;
+                    }
+
                 }
 
                 return users;
@@ -210,7 +233,6 @@ namespace O365_UWP_Unified_API_Snippets
         }
 
         // Gets the signed-in user's calendar events.
-
         public static async Task<List<string>> GetEventsAsync()
         {
             var events = new List<string>();
@@ -1044,6 +1066,67 @@ namespace O365_UWP_Unified_API_Snippets
             }
 
             return createFolderId;
+        }
+
+        // Get specific user's calendar events.
+        public static async Task<List<JObject>> GetTestUsersEventsAsync()
+        {
+            var events = new List<JObject>();
+            JObject jResult = null;
+            JObject userInfo = null;
+            string userName = null;
+
+            foreach (JObject ui in usersDetails)
+            {
+                if ( ui["userPrincipalName"].ToString() == "bharvey@raydon.com")
+                {
+                    userInfo = ui;
+                    break;
+                }
+            }
+
+            try
+            {
+                HttpClient client = new HttpClient();
+                var token = await AuthenticationHelper.GetTokenHelperAsync();
+                client.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
+
+                // Endpoint for the current user's events
+                var userId = (string)userInfo["id"];
+                userName = (string)userInfo["displayName"];
+                Uri usersEndpoint = new Uri(serviceEndpoint + "/users/" + userId + "/events");
+
+                HttpResponseMessage response = await client.GetAsync(usersEndpoint);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    string responseContent = await response.Content.ReadAsStringAsync();
+                    jResult = JObject.Parse(responseContent);
+
+                    foreach (JObject calendarEvent in jResult["value"])
+                    {
+                        string eventId = (string)calendarEvent["Id"];
+                        events.Add(calendarEvent);
+                        Debug.WriteLine("Got event: " + eventId);
+                    }
+
+                }
+
+                else
+                {
+                    Debug.WriteLine($"We could not get user {userName} events. The request returned this status code: " + response.StatusCode);
+                    return null;
+
+                }
+            }
+
+            catch (Exception e)
+            {
+                Debug.WriteLine($"We could not get user {userName} events: " + e.Message);
+                return null;
+            }
+
+            return events;
         }
 
     }

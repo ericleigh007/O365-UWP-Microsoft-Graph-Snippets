@@ -150,6 +150,12 @@ namespace O365_UWP_Unified_API_Snippets
             var createdFolderId = await UserSnippets.CreateFolderAsync(Guid.NewGuid().ToString());
             return createdFolderId != null;
         }
+
+        public static async Task<bool> TryGetTestUsersEventsAsync()
+        {
+            var resp = await UserSnippets.GetTestUsersEventsAsync();
+            return resp != null;
+        }
     }
 }
 

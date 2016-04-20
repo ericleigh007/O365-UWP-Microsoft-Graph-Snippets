@@ -1,40 +1,37 @@
 ﻿// Copyright (c) Microsoft. All rights reserved. Licensed under the MIT license. See full license at the bottom of this file.
 
 using System;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using Windows.Storage;
+
 
 namespace O365_UWP_Unified_API_Snippets
 {
-    /// <summary>
-    /// Base view model for working with the unified API.
-    /// </summary>
-    public class ViewModelBase : INotifyPropertyChanged
+    class APIStories
     {
 
-        protected bool SetProperty<T>(ref T field, T value, [CallerMemberName] string propertyName = "")
-        {
-            // If the value is the same as the current value, return false to indicate this was a no-op. 
-            if (Object.Equals(field, value))
-                return false;
+        private static readonly string STORY_DATA_IDENTIFIER = Guid.NewGuid().ToString();
 
-            // Raise any registered property changed events, and indicate to the user that the value was indeed changed.
-            field = value;
-            NotifyPropertyChanged(propertyName);
-            return true;
+        public static async Task<bool> TryGetMetadataAsync()
+        {
+            var resp = await APISnippets.GetMetaDataAsync();
+            return resp.Length > 0 ;
         }
 
-        public event PropertyChangedEventHandler PropertyChanged;
-
-
-        protected void NotifyPropertyChanged([CallerMemberName]string propertyName = "")
+        public static async Task<bool> TryGetBetadataAsync()
         {
-            var propChanged = PropertyChanged;
-            if (propChanged != null)
-                propChanged(this, new PropertyChangedEventArgs(propertyName));
+            var resp = await APISnippets.GetBetaDataAsync();
+            return resp.Length > 0;
         }
+
     }
 }
+
+
+
 //********************************************************* 
 // 
 //O365-UWP-Microsoft-Graph-Snippets, https://github.com/OfficeDev/O365-UWP-Microsoft-Graph-Snippets
@@ -45,7 +42,7 @@ namespace O365_UWP_Unified_API_Snippets
 // MIT License:
 // Permission is hereby granted, free of charge, to any person obtaining
 // a copy of this software and associated documentation files (the
-// "Software"), to deal in the Software without restriction, including
+// ""Software""), to deal in the Software without restriction, including
 // without limitation the rights to use, copy, modify, merge, publish,
 // distribute, sublicense, and/or sell copies of the Software, and to
 // permit persons to whom the Software is furnished to do so, subject to
